@@ -1,0 +1,40 @@
+{
+  "intents": [
+    {
+      "tag": "welcome",
+      "patterns": ["oi", "bom dia", "boa tarde", "boa noite", "good morning", "hi", "hello", "olá"],
+      "responses": ["Olá, eu sou sua assistente virtual, em que posso te ajudar?", "Oi, tudo bem? Posso te ajudar?"],
+      "context": [""]
+    },
+    {
+      "tag": "who_are_you",
+      "patterns": ["qual seu nome?", "quem é você?", "como você chama?", "nome?", "vc é quem"],
+      "responses": ["Eu sou uma assistente virtual, ainda não tenho nome."],
+      "context": [""]
+    },
+    {
+      "tag": "domhelder",
+      "patterns": ["dom helder", "Onde fica a dom helder", "Onde se localiza"],
+      "responses": ["A Dom Helder se localiza na rua Álvares Maciel, 628 - Santa Efigênia, Belo Horizonte - MG"],
+      "context": [""]
+    },
+    {
+      "tag": "recepcao",
+      "patterns": ["recepcao", "onde fica a recepcao"],
+      "responses": ["A recepção da Dom Helder se econtra a esquerda logo depois de passar as catracas da portaria"],
+      "context": [""]
+    },
+    {
+      "tag": "biblioteca",
+      "patterns": ["biblioteca", "onde fica a biblioteca", "onde consigo livros emprestados"],
+      "responses": ["A Biblioteca da Hom Helder pode ser acessada pelo elevador ou pelas escadas, ambos com uma sinalização 'B'"],
+      "context": [""]
+    },
+    {
+      "tag": "anything_else",
+      "patterns": [],
+      "responses": ["Desculpa, não entendi o que você falou, tente novamente!"],
+      "context": [""]
+    }
+  ]
+}
