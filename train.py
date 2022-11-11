@@ -2,7 +2,7 @@ import nltk
 from nltk import tokenize  
 from nltk.stem.lancaster import LancasterStemmer
 stemmer = LancasterStemmer()
-
+import pandas as pd
 import numpy as np
 import tflearn
 import tensorflow as tf
@@ -15,70 +15,76 @@ ignore_words = ["!", "@", "#", "$", "%", "*", "?", "'"]
 
 nltk.download("stopwords")
 
+#DOWNLOAD DO TEXTO
 wiki.set_lang("pt")
-breast_cancer_content = wiki.page("Breast_cancer").content
+breast_cancer_content = wiki.page("Breast cancer").content
 
-classes = re.findall('=\s(.*)\s=',breast_cancer_content)
-sentences = re.sub(r'=(.*)=', '',breast_cancer_content)
-sentences = re.split(r'\n', sentences)
-while '' in sentences:
-    sentences.remove('')
+#CRIANDO UM DATAFRAME CATEGORIZANDO CADA SENTENÇA ====================================================================
+# separa todos os titulos
+classes = re.findall('=\s(.*)\s=',breast_cancer_content) 
+classes.insert(0, 'Cancer de mama')
 
-# Tokenização
+# separa os paragrafos do titulos
+raw = re.split(r'=+\s(.*)\s=+',breast_cancer_content)  
+blocos = []
+for r in range(0, len(raw)-1, 2):
+    blocos.append(raw[r])
+
+#monta o dataframe com cada sentença e sua classe
+d = {'classes': [], 'sentencas': []}
+df = pd.DataFrame(d)
+
 words = []
-documents = []
-for i in range(1,len(sentences)-1):
-    w = tokenize.word_tokenize(sentences[1], language='portuguese')
-    words.extend(w)
-    documents.append((w, classes[i]))
+for b in range(0, len(blocos)-1):
+    sentences = tokenize.sent_tokenize(blocos[b], language='portuguese')
+    for s in sentences:
+        s = re.sub(r'\n', '', s)
+        #Tokeniza cada palavra da sentença
+        w = tokenize.word_tokenize(s)
+        # adiciona na lista de words
+        words.extend(w)
+        df = pd.concat([df, pd.Series({'classes': classes[b], 'sentencas': w}).to_frame().T], ignore_index=True) 
 
-# Stem e lower cada palavra e remove duplicados
-words = [stemmer.stem(w.lower()) for w in words if w not in ignore_words]
-words = sorted(list(set(words)))
 
-# remove duplicates
-classes = sorted(list(set(classes)))
-
-print(len(documents), "documents", documents)
-print(len(classes), "classes", classes)
-print(len(words), "words", words)
-
+# PREPARANDO O TREINAMENTO ==========================================================================================
 training = []
 output = []
 output_empty = [0] * len(classes)
 
-# training set, bag of words for each sentence
-for sent in documents:
-    # initialize our bag of words
-    bag = []
-    # list of tokenized words for the pattern
-    pattern_words = sent
-    # stem each word
+for i, line in df.iterrows():
+    bag = [] # inicializa a bag of words
+
+    #lista de tokens da sentença
+    pattern_words = line['sentencas']
+    # stem cada palavra
     pattern_words = [stemmer.stem(word.lower()) for word in pattern_words]
-    # create our bag of words array
+
     for w in words:
         bag.append(1) if w in pattern_words else bag.append(0)
 
-    training.append(bag)
+    output_row = list(output_empty)
+    output_empty[classes.index(line['classes'])] = 1
+
+    training.append([bag, output_row])
 
 
 # shuffle our features and turn into np.array
 random.shuffle(training)
 training = np.array(training)
 
-print(training)
+train_x = list(training[:,0])
+train_y = list(training[:,1])
 
-
-net = tflearn.input_data(shape=[None, len(training[0])])
+net = tflearn.input_data(shape=[None, len(train_x[0])])
 net = tflearn.fully_connected(net, 8)
 net = tflearn.fully_connected(net, 8)
-net = tflearn.fully_connected(net, len(training[0]), activation='softmax')
+net = tflearn.fully_connected(net, len(train_y[0]), activation='softmax')
 net = tflearn.regression(net)
 
 # Define model and setup tensorboard
 model = tflearn.DNN(net, tensorboard_dir='tflearn_logs')
 # Start training (apply gradient descent algorithm)
-model.fit(training, training, n_epoch=1000, batch_size=8, show_metric=True)
+model.fit(train_x, train_y, n_epoch=1000, batch_size=8, show_metric=True)
 model.save('Mymodel.tflearn')
 
 def clean_up_sentence(sentence):
@@ -104,11 +110,11 @@ def bow(sentence, words, show_details=False):
     return(np.array(bag))
 
 
-p = bow("fatores de risco", words, True)
+p = bow("sintomas", words, True)
 print (p)
 
 print(model.predict([p]))
 
 # save all of our data structures
 import pickle
-pickle.dump( {'words':words, 'train_x':training, 'train_y':training}, open( "Mytraining_data", "wb" ) )
+pickle.dump( {'words':words, 'classes' :classes, 'train_x':train_x, 'train_y': train_y}, open( "Mytraining_data", "wb" ) )
