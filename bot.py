@@ -19,6 +19,14 @@ train_y = data['train_y']
 
 df = pd.read_csv('breast_cancer_wiki.csv')
 
+documents = {}
+for i, line in df.iterrows():
+    if line['classes'] not in documents:
+        documents.update({line['classes'] : [line['sentencas']]})
+    else:
+        documents[line['classes']].append(line['sentencas'])  
+
+
 # Build neural network
 net = tflearn.input_data(shape=[None, len(train_x[0])])
 net = tflearn.fully_connected(net, 8)
@@ -62,17 +70,20 @@ model.load('./Mymodel.tflearn')
 # create a data structure to hold user context
 context = {}
 
-ERROR_THRESHOLD = 0.25
+ERROR_THRESHOLD = 0.025
 def classify(sentence):
     # generate probabilities from the model
     results = model.predict([bow(sentence, words)])[0]
     # filter out predictions below a threshold
-    resultado = results
-    results = [[i,r] for i,r in enumerate(results) if r>ERROR_THRESHOLD]
+    # results = [[i,r] for i,r in enumerate(results) if r>ERROR_THRESHOLD]
+    resultados = []
+    for i, r in enumerate(results):
+        if r > ERROR_THRESHOLD:
+            resultados.append([i,r])
     # sort by strength of probability
-    results.sort(key=lambda x: x[1], reverse=True)
+    resultados.sort(key=lambda x: x[1], reverse=True)
     return_list = []
-    for r in results:
+    for r in resultados:
         return_list.append((classes[r[0]], r[1]))
     # return tuple of intent and probability
     return return_list
@@ -83,14 +94,13 @@ def response(sentence):
     if results:
         # loop as long as there are matches to process
         while results:
-            for i, line in df:
+            for classe, sentencas in documents.items():
                 # find a tag matching the first result
-                if line['sentencas'] == results[0][0]:
-                    # a random response from the intent
-                    return print(random.choice(line['sentencas']))
+                if classe == results[0][0]:
+                    return print(random.choice(sentencas))
 
             results.pop(0)
 
 
-print('cancer de mama')
-response('cancer de mama')
+print('sintomas')
+response('Sinais e sintomas')
