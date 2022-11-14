@@ -1,7 +1,6 @@
 import nltk
-from nltk import tokenize  
-from nltk.stem.lancaster import LancasterStemmer
-stemmer = LancasterStemmer()
+from nltk import tokenize 
+stemmer = nltk.stem.RSLPStemmer()
 import pandas as pd
 import numpy as np
 import tflearn
@@ -11,9 +10,7 @@ import random
 import wikipedia as wiki
 import re
 
-ignore_words = ["!", "@", "#", "$", "%", "*", "?", "'"]
-
-nltk.download("stopwords")
+ignore_words = ["!", "@", "#", "$", "%", "*", "?", "=", "(", ")"]
 
 #DOWNLOAD DO TEXTO
 wiki.set_lang("pt")
@@ -40,11 +37,19 @@ for b in range(0, len(blocos)-1):
     for s in sentences:
         s = re.sub(r'\n', '', s)
         #Tokeniza cada palavra da sentença
-        w = tokenize.word_tokenize(s)
+        w = tokenize.word_tokenize(s, language='portuguese')
         # adiciona na lista de words
         words.extend(w)
-        df = pd.concat([df, pd.Series({'classes': classes[b], 'sentencas': w}).to_frame().T], ignore_index=True) 
+        df = pd.concat([df, pd.Series({'classes': classes[b], 'sentencas': s}).to_frame().T], ignore_index=True) 
 
+# stem and lower each word and remove duplicates
+words = [stemmer.stem(w.lower()) for w in words if w not in ignore_words]
+words = sorted(list(set(words)))
+
+classes = sorted(list(set(classes)))
+
+# Salva o dataset em um csv
+df.to_csv('breast_cancer_wiki.csv')
 
 # PREPARANDO O TREINAMENTO ==========================================================================================
 training = []
@@ -55,7 +60,7 @@ for i, line in df.iterrows():
     bag = [] # inicializa a bag of words
 
     #lista de tokens da sentença
-    pattern_words = line['sentencas']
+    pattern_words = tokenize.word_tokenize(line['sentencas'])
     # stem cada palavra
     pattern_words = [stemmer.stem(word.lower()) for word in pattern_words]
 
@@ -82,14 +87,14 @@ net = tflearn.fully_connected(net, len(train_y[0]), activation='softmax')
 net = tflearn.regression(net)
 
 # Define model and setup tensorboard
-model = tflearn.DNN(net, tensorboard_dir='tflearn_logs')
+model = tflearn.DNN(net, tensorboard_dir='Mytflearn_logs')
 # Start training (apply gradient descent algorithm)
 model.fit(train_x, train_y, n_epoch=1000, batch_size=8, show_metric=True)
 model.save('Mymodel.tflearn')
 
 def clean_up_sentence(sentence):
     # tokenize the pattern
-    sentence_words = nltk.word_tokenize(sentence)
+    sentence_words = nltk.word_tokenize(sentence, language='portuguese')
     # stem each word
     sentence_words = [stemmer.stem(word.lower()) for word in sentence_words]
     return sentence_words
