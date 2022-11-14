@@ -8,6 +8,15 @@ import tflearn
 import tensorflow as tf
 import random
 import pandas as pd
+import string
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+import warnings
+warnings.filterwarnings('ignore')
+
+stopwords = nltk.corpus.stopwords.words('portuguese')
 
 # restore all of our data structures
 import pickle
@@ -59,17 +68,10 @@ def bow(sentence, words, show_details=False):
 
     return(np.array(bag))
 
-p = bow("Cancer de mama", words, show_details=True)
-print (p)
-# print (classes)
-
-
 # load our saved model
 model.load('./Mymodel.tflearn')
 
 # create a data structure to hold user context
-context = {}
-
 ERROR_THRESHOLD = 0.025
 def classify(sentence):
     # generate probabilities from the model
@@ -88,6 +90,17 @@ def classify(sentence):
     # return tuple of intent and probability
     return return_list
 
+# Preprocessing
+lemmer = nltk.stem.WordNetLemmatizer()
+
+def LemTokens(tokens):
+    return [lemmer.lemmatize(token) for token in tokens]
+
+remove_punct_dict = dict((ord(punct), None) for punct in string.punctuation)
+
+def LemNormalize(text):
+    return LemTokens(nltk.word_tokenize(text.lower().translate(remove_punct_dict), language='portuguese'))
+
 def response(sentence):
     results = classify(sentence)
     # if we have a classification then find the matching intent tag
@@ -97,10 +110,22 @@ def response(sentence):
             for classe, sentencas in documents.items():
                 # find a tag matching the first result
                 if classe == results[0][0]:
-                    return print(random.choice(sentencas))
-
+                    TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words=stopwords)
+                    sentencas.append(sentence)
+                    tfidf = TfidfVec.fit_transform(sentencas)
+                    vals = cosine_similarity(tfidf[-1], tfidf)
+                    idx = vals.argsort()[0][-2]
+                    flat = vals.flatten()
+                    flat.sort()
+                    req_tfidf = flat[-2]
+                    if(req_tfidf != 0):
+                        return print(sentencas[idx])
             results.pop(0)
 
+# user_response = 'O que é o Cancer de mama?' 
+# print(user_response)
+# response(user_response)
 
-print('sintomas')
-response('Sinais e sintomas')
+user_response = 'sintomas' 
+print(user_response)
+response(user_response)
