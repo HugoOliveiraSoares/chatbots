@@ -5,10 +5,10 @@ stemmer = nltk.stem.RSLPStemmer()
 # things we need for Tensorflow
 import numpy as np
 import tflearn
-import tensorflow as tf
-import random
 import pandas as pd
 import string
+import spacy
+from spacy.lang.pt import stop_words
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -16,7 +16,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import warnings
 warnings.filterwarnings('ignore')
 
-stopwords = nltk.corpus.stopwords.words('portuguese')
+sp = spacy.load("pt_core_news_md")
 
 # restore all of our data structures
 import pickle
@@ -25,6 +25,7 @@ words = data['words']
 classes = data['classes']
 train_x = data['train_x']
 train_y = data['train_y']
+
 
 df = pd.read_csv('breast_cancer_wiki.csv')
 
@@ -48,7 +49,7 @@ model = tflearn.DNN(net, tensorboard_dir='Mytflearn_logs')
 
 def clean_up_sentence(sentence):
     # tokenize the pattern
-    sentence_words = nltk.word_tokenize(sentence, language='portuguese')
+    sentence_words =[token.text for token in sp(sentence) ] 
     # stem each word
     sentence_words = [stemmer.stem(word.lower()) for word in sentence_words]
     return sentence_words
@@ -91,15 +92,10 @@ def classify(sentence):
     return return_list
 
 # Preprocessing
-lemmer = nltk.stem.WordNetLemmatizer()
-
-def LemTokens(tokens):
-    return [lemmer.lemmatize(token) for token in tokens]
-
 remove_punct_dict = dict((ord(punct), None) for punct in string.punctuation)
 
 def LemNormalize(text):
-    return LemTokens(nltk.word_tokenize(text.lower().translate(remove_punct_dict), language='portuguese'))
+    return [token.lemma_.lower().translate(remove_punct_dict) for token in sp(text)]
 
 def response(sentence):
     results = classify(sentence)
@@ -110,7 +106,7 @@ def response(sentence):
             for classe, sentencas in documents.items():
                 # find a tag matching the first result
                 if classe == results[0][0]:
-                    TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words=stopwords)
+                    TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words=stop_words.STOP_WORDS)
                     sentencas.append(sentence)
                     tfidf = TfidfVec.fit_transform(sentencas)
                     vals = cosine_similarity(tfidf[-1], tfidf)
@@ -122,10 +118,19 @@ def response(sentence):
                         return print(sentencas[idx])
             results.pop(0)
 
-# user_response = 'O que é o Cancer de mama?' 
-# print(user_response)
-# response(user_response)
-
-user_response = 'sintomas' 
+user_response = 'Cancer de mama' 
 print(user_response)
 response(user_response)
+
+user_response = 'sinais e sintomas' 
+print(user_response)
+response(user_response)
+
+user_response = 'o que é cancer de mama' 
+print(user_response)
+response(user_response)
+
+user_response = 'sinais' 
+print(user_response)
+response(user_response)
+

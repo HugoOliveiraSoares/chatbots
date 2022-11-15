@@ -9,8 +9,11 @@ import random
 
 import wikipedia as wiki
 import re
+import spacy
 
-ignore_words = ["!", "@", "#", "$", "%", "*", "?", "=", "(", ")"]
+sp = spacy.load("pt_core_news_md")
+
+ignore_words = ["!", "@", "#", "$", "%", "*", "?", "=", "(", ")", " "]
 
 #DOWNLOAD DO TEXTO
 wiki.set_lang("pt")
@@ -33,11 +36,13 @@ df = pd.DataFrame(d)
 
 words = []
 for b in range(0, len(blocos)-1):
-    sentences = tokenize.sent_tokenize(blocos[b], language='portuguese')
+    sentences = [str(sent) for sent in sp(blocos[b]).sents] 
     for s in sentences:
         s = re.sub(r'\n', '', s)
+        if s == '' or '\n' in s:
+            continue
         #Tokeniza cada palavra da sentença
-        w = tokenize.word_tokenize(s, language='portuguese')
+        w = sp(s).text
         # adiciona na lista de words
         words.extend(w)
         df = pd.concat([df, pd.Series({'classes': classes[b], 'sentencas': s}).to_frame().T], ignore_index=True) 
@@ -60,7 +65,7 @@ for i, line in df.iterrows():
     bag = [] # inicializa a bag of words
 
     #lista de tokens da sentença
-    pattern_words = tokenize.word_tokenize(line['sentencas'])
+    pattern_words = sp(line['sentencas']).text
     # stem cada palavra
     pattern_words = [stemmer.stem(word.lower()) for word in pattern_words]
 
@@ -94,7 +99,7 @@ model.save('Mymodel.tflearn')
 
 def clean_up_sentence(sentence):
     # tokenize the pattern
-    sentence_words = nltk.word_tokenize(sentence, language='portuguese')
+    sentence_words =[token.text for token in sp(sentence) ] 
     # stem each word
     sentence_words = [stemmer.stem(word.lower()) for word in sentence_words]
     return sentence_words
@@ -115,7 +120,7 @@ def bow(sentence, words, show_details=False):
     return(np.array(bag))
 
 
-p = bow("sintomas", words, True)
+p = bow("cancer de mama", words, True)
 print (p)
 
 print(model.predict([p]))
