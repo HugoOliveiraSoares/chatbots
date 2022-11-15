@@ -9,17 +9,18 @@ import pandas as pd
 import string
 import spacy
 from spacy.lang.pt import stop_words
-
+import pickle
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 import warnings
 warnings.filterwarnings('ignore')
+import logging
+logging.getLogger("tensorflow").setLevel(logging.WARNING)
 
 sp = spacy.load("pt_core_news_md")
 
 # restore all of our data structures
-import pickle
 data = pickle.load( open( "Mytraining_data", "rb" ) )
 words = data['words']
 classes = data['classes']
@@ -118,19 +119,13 @@ def response(sentence):
                         return print(sentencas[idx])
             results.pop(0)
 
-user_response = 'Cancer de mama' 
-print(user_response)
-response(user_response)
-
-user_response = 'sinais e sintomas' 
-print(user_response)
-response(user_response)
-
-user_response = 'o que é cancer de mama' 
-print(user_response)
-response(user_response)
-
-user_response = 'sinais' 
-print(user_response)
-response(user_response)
-
+flag = True
+print("ROBO: Meu nome e Robo. Eu irei responder todas as suas duvidas sobre Cancer de mama. Se quiser sair, digite 'Adeus'!")
+while flag:
+    user_response = input("> ")
+    if(user_response != 'Adeus'):
+        print("ROBO: ",end="")
+        response(user_response)
+    else:
+        flag=False
+        print("ROBO: Tchau! Ate mais...")
