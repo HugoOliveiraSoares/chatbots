@@ -12,30 +12,46 @@ from spacy.lang.pt import stop_words
 import pickle
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import json
 
 import warnings
 warnings.filterwarnings('ignore')
 import logging
 logging.getLogger("tensorflow").setLevel(logging.WARNING)
 
+# Carrega o modulo em portugues do spacy
 sp = spacy.load("pt_core_news_md")
 
-# restore all of our data structures
+# restaura as estruturas de dados
 data = pickle.load( open( "Mytraining_data", "rb" ) )
 words = data['words']
 classes = data['classes']
 train_x = data['train_x']
 train_y = data['train_y']
+documents = data['documents']
+
+# carrega o dataset do documento
+# df = pd.read_csv('breast_cancer_wiki.csv')
+
+# Importa o arquivo intents.json
+# intents = json.loads(open('intents.json').read())
+
+# Monta o corpus no dicionario documents
+# documents = {}
+
+# PERCORREMOS O ARRAY DE OBJETOS DO JSON
+# for intent in intents['intents']:
+#     for pattern in intent['patterns']:
+        
+#         # adiciona aos documentos para identificarmos a tag para a mesma
+#         documents.append((intent['tag'], pattern))
 
 
-df = pd.read_csv('breast_cancer_wiki.csv')
-
-documents = {}
-for i, line in df.iterrows():
-    if line['classes'] not in documents:
-        documents.update({line['classes'] : [line['sentencas']]})
-    else:
-        documents[line['classes']].append(line['sentencas'])  
+# for i, line in df.iterrows():
+#     if line['classes'] not in documents:
+#         documents.update({line['classes'] : [line['sentencas']]})
+#     else:
+#         documents[line['classes']].append(line['sentencas'])  
 
 
 # Build neural network
@@ -121,6 +137,7 @@ def response(sentence):
                     if(req_tfidf != 0):
                         return print(s[idx])
             results.pop(0)
+        return print("Desculpe não consegui entender. Poderia repetir?")
 
 flag = True
 
@@ -131,7 +148,7 @@ print("Bot: Caso queira encerrar digite 'sair'!")
 
 while flag:
     user_response = input("> ")
-    if(user_response.lower() != 'sair'):
+    if(user_response.lower() != 'tchau'):
         print("Bot: ",end="")
         response(user_response)
     else:
