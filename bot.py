@@ -120,11 +120,11 @@ flag = True
 print('')
 print("Bot: Olá, meu nome é Bot.")
 print("Bot: Pode me perguntar o que quiser sobre câncer de mama.")
-print("Bot: Caso queira encerrar digite 'sair'!")
+print("Bot: Caso queira encerrar digite 'sair' ou 'tchau'!")
 
 while flag:
     user_response = input("> ")
-    if(user_response.lower() != 'tchau'):
+    if(user_response.lower() != 'sair' and user_response.lower() != 'tchau'):
         print("Bot: ",end="")
         response(user_response)
     else:
