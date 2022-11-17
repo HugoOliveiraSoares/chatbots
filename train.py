@@ -10,6 +10,7 @@ import random
 import wikipedia as wiki
 import re
 import spacy
+from spacy.lang.pt import stop_words
 
 sp = spacy.load("pt_core_news_md")
 
@@ -98,8 +99,9 @@ model.fit(train_x, train_y, n_epoch=1000, batch_size=8, show_metric=True)
 model.save('Mymodel.tflearn')
 
 def clean_up_sentence(sentence):
+    sentence_words = [word for word in sentence if word not in stop_words.STOP_WORDS]
     # tokenize the pattern
-    sentence_words =[token.text for token in sp(sentence) ] 
+    sentence_words =[token for token in sp(sentence).text ] 
     # stem each word
     sentence_words = [stemmer.stem(word.lower()) for word in sentence_words]
     return sentence_words
@@ -116,12 +118,11 @@ def bow(sentence, words, show_details=False):
                 bag[i] = 1
                 if show_details:
                     print ("found in bag: %s" % w)
-
+                break
     return(np.array(bag))
 
-
 p = bow("cancer de mama", words, True)
-print (p)
+print ("cancer de mama", p)
 
 print(model.predict([p]))
 

@@ -49,8 +49,9 @@ net = tflearn.regression(net)
 model = tflearn.DNN(net, tensorboard_dir='Mytflearn_logs')
 
 def clean_up_sentence(sentence):
+    sentence_words = [word for word in sentence if word not in stop_words.STOP_WORDS]
     # tokenize the pattern
-    sentence_words =[token.text for token in sp(sentence) ] 
+    sentence_words =[token for token in sp(sentence).text ] 
     # stem each word
     sentence_words = [stemmer.stem(word.lower()) for word in sentence_words]
     return sentence_words
@@ -67,7 +68,7 @@ def bow(sentence, words, show_details=False):
                 bag[i] = 1
                 if show_details:
                     print ("found in bag: %s" % w)
-
+                break
     return(np.array(bag))
 
 # load our saved model
@@ -104,19 +105,21 @@ def response(sentence):
     if results:
         # loop as long as there are matches to process
         while results:
+            s = []
             for classe, sentencas in documents.items():
                 # find a tag matching the first result
                 if classe == results[0][0]:
                     TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words=stop_words.STOP_WORDS)
-                    sentencas.append(sentence)
-                    tfidf = TfidfVec.fit_transform(sentencas)
+                    s.extend(sentencas)
+                    s.append(sentence)
+                    tfidf = TfidfVec.fit_transform(s)
                     vals = cosine_similarity(tfidf[-1], tfidf)
                     idx = vals.argsort()[0][-2]
                     flat = vals.flatten()
                     flat.sort()
                     req_tfidf = flat[-2]
                     if(req_tfidf != 0):
-                        return print(sentencas[idx])
+                        return print(s[idx])
             results.pop(0)
 
 flag = True
