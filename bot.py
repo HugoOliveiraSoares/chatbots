@@ -1,8 +1,6 @@
-# things we need for NLP
 import nltk
 stemmer = nltk.stem.RSLPStemmer()
 
-# things we need for Tensorflow
 import numpy as np
 import tflearn
 import pandas as pd
@@ -30,39 +28,25 @@ train_x = data['train_x']
 train_y = data['train_y']
 documents = data['documents']
 
-# carrega o dataset do documento
-# df = pd.read_csv('breast_cancer_wiki.csv')
-
-# Importa o arquivo intents.json
-# intents = json.loads(open('intents.json').read())
-
-# Monta o corpus no dicionario documents
-# documents = {}
-
-# PERCORREMOS O ARRAY DE OBJETOS DO JSON
-# for intent in intents['intents']:
-#     for pattern in intent['patterns']:
-        
-#         # adiciona aos documentos para identificarmos a tag para a mesma
-#         documents.append((intent['tag'], pattern))
-
-
-# for i, line in df.iterrows():
-#     if line['classes'] not in documents:
-#         documents.update({line['classes'] : [line['sentencas']]})
-#     else:
-#         documents[line['classes']].append(line['sentencas'])  
-
-
-# Build neural network
+# constroi a rede neural
 net = tflearn.input_data(shape=[None, len(train_x[0])])
 net = tflearn.fully_connected(net, 8)
 net = tflearn.fully_connected(net, 8)
 net = tflearn.fully_connected(net, len(train_y[0]), activation='softmax')
 net = tflearn.regression(net)
 
-# Define model and setup tensorboard
+# Define o modelo e configura o tensorboard
 model = tflearn.DNN(net, tensorboard_dir='Mytflearn_logs')
+
+# Carrega o modelo 
+model.load('./Mymodel.tflearn')
+
+# Preprocessamento
+
+remove_punct_dict = dict((ord(punct), None) for punct in string.punctuation)
+
+def LemNormalize(text):
+    return [token.lemma_.lower().translate(remove_punct_dict) for token in sp(text)]
 
 def clean_up_sentence(sentence):
     sentence_words = [word for word in sentence if word not in stop_words.STOP_WORDS]
@@ -87,10 +71,6 @@ def bow(sentence, words, show_details=False):
                 break
     return(np.array(bag))
 
-# load our saved model
-model.load('./Mymodel.tflearn')
-
-# create a data structure to hold user context
 ERROR_THRESHOLD = 0.025
 def classify(sentence):
     # generate probabilities from the model
@@ -109,20 +89,14 @@ def classify(sentence):
     # return tuple of intent and probability
     return return_list
 
-# Preprocessing
-remove_punct_dict = dict((ord(punct), None) for punct in string.punctuation)
-
-def LemNormalize(text):
-    return [token.lemma_.lower().translate(remove_punct_dict) for token in sp(text)]
-
 def response(sentence):
     results = classify(sentence)
     # if we have a classification then find the matching intent tag
     if results:
         # loop as long as there are matches to process
         while results:
-            s = []
             for classe, sentencas in documents.items():
+                s = []
                 # find a tag matching the first result
                 if classe == results[0][0]:
                     TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words=stop_words.STOP_WORDS)

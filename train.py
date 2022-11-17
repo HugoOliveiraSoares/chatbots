@@ -17,7 +17,7 @@ import json
 sp = spacy.load("pt_core_news_md")
 
 # Pontuações a serem ignoradas
-ignore_punct = ["!", "@", "#", "$", "%", "*", "?", "=", "(", ")", " "]
+ignore_punct = ["!", "@", "#", "$", "%", "*", "?", "=", "(", ")", " ", ".", "/", "'", "\""]
 
 classes = []
 words = []
@@ -97,18 +97,18 @@ output_empty = [0] * len(classes)
 for classe in documents.keys():
     for sentenca in documents[classe]:
         bag = [] # inicializa a bag of words
-    
+
         #lista de tokens da sentença
         pattern_words = [token for token in sp(sentenca).text]
         # stem cada palavra
         pattern_words = [stemmer.stem(word.lower()) for word in pattern_words]
-    
+
         for w in words:
             bag.append(1) if w in pattern_words else bag.append(0)
-    
+
         output_row = list(output_empty)
         output_empty[classes.index(classe)] = 1
-    
+
         training.append([output_row, bag])
 
 # embaralha o conjunto de treinamento 
