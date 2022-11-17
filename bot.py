@@ -49,16 +49,17 @@ def LemNormalize(text):
     return [token.lemma_.lower().translate(remove_punct_dict) for token in sp(text)]
 
 def clean_up_sentence(sentence):
+    # remove stop words
     sentence_words = [word for word in sentence if word not in stop_words.STOP_WORDS]
-    # tokenize the pattern
+    # tokeniza a sentença
     sentence_words =[token for token in sp(sentence).text ] 
-    # stem each word
+    # stemiza cada palavra
     sentence_words = [stemmer.stem(word.lower()) for word in sentence_words]
     return sentence_words
 
-# return bag of words array: 0 or 1 for each word in the bag that exists in the sentence
+# retorna uma bag of words onde: 0 ou 1 para cada palavra na bag que exista na sentença 
 def bow(sentence, words, show_details=False):
-    # tokenize the pattern
+    # tokenize sentença e remove stop_words
     sentence_words = clean_up_sentence(sentence)
     # bag of words
     bag = [0]*len(words)  
@@ -67,38 +68,38 @@ def bow(sentence, words, show_details=False):
             if w == s: 
                 bag[i] = 1
                 if show_details:
-                    print ("found in bag: %s" % w)
+                    print ("encontrado na bag: %s" % w)
                 break
     return(np.array(bag))
 
 ERROR_THRESHOLD = 0.025
 def classify(sentence):
-    # generate probabilities from the model
+    # gera as probabilidades do modelo
     results = model.predict([bow(sentence, words)])[0]
-    # filter out predictions below a threshold
-    # results = [[i,r] for i,r in enumerate(results) if r>ERROR_THRESHOLD]
+    # filtra as predicões a baixo de a cordo com o threshold
     resultados = []
     for i, r in enumerate(results):
         if r > ERROR_THRESHOLD:
             resultados.append([i,r])
-    # sort by strength of probability
+    # ordena por força de probabilidade
     resultados.sort(key=lambda x: x[1], reverse=True)
     return_list = []
     for r in resultados:
         return_list.append((classes[r[0]], r[1]))
-    # return tuple of intent and probability
+    # returna uma tupla de classes e probabilidade
     return return_list
 
 def response(sentence):
     results = classify(sentence)
-    # if we have a classification then find the matching intent tag
+    # se tem a classificação então procuramos a resposta adequada
     if results:
-        # loop as long as there are matches to process
+        # loop enquanto tem resultados pra processar
         while results:
             for classe, sentencas in documents.items():
                 s = []
-                # find a tag matching the first result
+                # encontra a classe correpondente 
                 if classe == results[0][0]:
+                    # Calcula o TF-IDF para encontar a frase mais adequada para retornar
                     TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words=stop_words.STOP_WORDS)
                     s.extend(sentencas)
                     s.append(sentence)
@@ -111,7 +112,8 @@ def response(sentence):
                     if(req_tfidf != 0):
                         return print(s[idx])
             results.pop(0)
-        return print("Desculpe não consegui entender. Poderia repetir?")
+        # Se percorrer por todos os resultados e não encontrar uma resposta, não pude entender a entrada do usuario 
+        return print("Desculpe não consegui entender. Poderia repetir?") 
 
 flag = True
 
