@@ -120,12 +120,17 @@ def response(sentence):
             results.pop(0)
 
 flag = True
-print("ROBO: Meu nome e Robo. Eu irei responder todas as suas duvidas sobre Cancer de mama. Se quiser sair, digite 'Adeus'!")
+
+print('')
+print("Bot: Olá, meu nome é Bot.")
+print("Bot: Pode me perguntar o que quiser sobre câncer de mama.")
+print("Bot: Caso queira encerrar digite 'sair'!")
+
 while flag:
     user_response = input("> ")
-    if(user_response != 'Adeus'):
-        print("ROBO: ",end="")
+    if(user_response.lower() != 'sair'):
+        print("Bot: ",end="")
         response(user_response)
     else:
         flag=False
-        print("ROBO: Tchau! Ate mais...")
+        print("Bot: Obrigado, volte sempre!")
