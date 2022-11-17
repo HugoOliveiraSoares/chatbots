@@ -34,3 +34,8 @@ train.py
 # ChatBot
 bot.py
 ```
+
+
+
+https://user-images.githubusercontent.com/33163249/202552060-79baeb52-f770-4883-a383-bce6731719c5.mp4
+
